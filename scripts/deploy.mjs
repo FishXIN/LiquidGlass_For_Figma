@@ -2,7 +2,7 @@ import {execFileSync} from 'node:child_process';
 import {mkdtemp,cp,readdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';
 const run=(args,cwd=process.cwd())=>execFileSync('git',args,{cwd,encoding:'utf8',stdio:['ignore','pipe','inherit']}).trim();
-execFileSync(process.execPath,['--test','tests/core.test.mjs','tests/plugin.test.mjs'],{stdio:'inherit'});
+execFileSync(process.execPath,['--test','tests/core.test.mjs','tests/plugin.test.mjs','tests/vector.test.mjs'],{stdio:'inherit'});
 execFileSync(process.execPath,['scripts/build.mjs'],{stdio:'inherit'});
 const remote=run(['remote','get-url','origin']),target=await mkdtemp(join(tmpdir(),'liquidglass-pages-'));
 try{

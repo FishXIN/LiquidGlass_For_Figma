@@ -1,3 +1,4 @@
+import {validVectorSVG} from './validate-svg.mjs';
 import http from 'node:http';
 import {randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
@@ -28,8 +29,8 @@ export function createBridge({token=randomBytes(18).toString('hex'),origin=proce
         if(url.pathname==='/jobs'){
           if(!heartbeat||now()-heartbeat>=6000)return reply(409,{error:'Figma 插件未连接'});
           if(jobs.size>=20)return reply(429,{error:'任务过多，请稍后重试'});
-          if(typeof body.png!=='string'||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(body.png)||![body.width,body.height].every(n=>Number.isFinite(n)&&n>=1&&n<=4096))return reply(400,{error:'无效素材'});
-          const id=randomUUID();jobs.set(id,{id,created:now(),status:'pending',payload:{png:body.png,width:body.width,height:body.height,name:String(body.name||'Liquid Glass').slice(0,100)}});return reply(201,{id});
+          if(!validVectorSVG(body.svg)||![body.width,body.height].every(n=>Number.isFinite(n)&&n>=1&&n<=4096))return reply(400,{error:'无效素材'});
+          const id=randomUUID();jobs.set(id,{id,created:now(),status:'pending',payload:{svg:body.svg,width:body.width,height:body.height,name:String(body.name||'Liquid Glass').slice(0,100)}});return reply(201,{id});
         }
         if(url.pathname==='/plugin/ack'){
           const job=jobs.get(body.id);if(!job)return reply(404,{error:'任务不存在'});job.status=body.ok?'done':'error';job.error=body.ok?undefined:String(body.error||'Import failed').slice(0,300);delete job.payload;return reply(200,{ok:true});
