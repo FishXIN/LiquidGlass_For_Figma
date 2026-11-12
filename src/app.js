@@ -5,9 +5,9 @@ const defaults={width:360,height:250,radius:52,blur:6,refraction:24,edge:34,tint
 let p={...defaults},locked=false,frame=0,codeTimer=0,toastTimer=0,output=null,token='',pollTimer=0;
 const controls=[['width','宽度',100,650,1,' px'],['height','高度',80,500,1,' px'],['radius','圆角',0,250,1,' px'],['blur','磨砂',0,24,1,' px'],['refraction','折射',0,65,1,''],['edge','厚边宽度',5,90,1,' px'],['tint','白色透光层',0,.6,.01,''],['highlight','高光',0,1,.01,''],['light','光照方向',0,360,1,'°']];
 $('controls').innerHTML=controls.map(([key,label,min,max,step,unit])=>`<label class="control"><span>${label}<output id="out-${key}" for="${key}"></output></span><input id="${key}" aria-label="${label}" type="range" min="${min}" max="${max}" step="${step}" value="${p[key]}"></label>`).join('');
-function syncControls(){for(const [key,,min,max,step,unit] of controls){$(key).value=p[key];$('out-'+key).textContent=step<1?Math.round(p[key]*100)+'%':p[key]+unit;}}
+function syncControls(){for(const [key,,min,max,step,unit] of controls){if(key==='radius')$(key).max=Math.floor(Math.min(p.width,p.height)/2);$(key).value=p[key];$('out-'+key).textContent=step<1?Math.round(p[key]*100)+'%':p[key]+unit;}}
 function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),4500);}
-function keepInside(){p.x=clamp(p.x,p.width/2,W-p.width/2);p.y=clamp(p.y,p.height/2,H-p.height/2);}
+function keepInside(){p.radius=Math.min(p.radius,p.width/2,p.height/2);p.x=clamp(p.x,p.width/2,W-p.width/2);p.y=clamp(p.y,p.height/2,H-p.height/2);}
 function render(){cancelAnimationFrame(frame);output=null;frame=requestAnimationFrame(()=>{const t=performance.now();renderer.render(p);$('coordinates').textContent=`${Math.round(p.x)}, ${Math.round(p.y)}`;$('renderStatus').textContent=`${locked?'位置已锁定':'跟随鼠标'} · ${Math.round(performance.now()-t)} ms`;});clearTimeout(codeTimer);codeTimer=setTimeout(updateCode,220);}
 function getOutput(){if(!output)output=renderer.export(p);return output;}
 function updateCode(){const result=getOutput();$('code').value=result.svg;$('codeSize').textContent=`${Math.round(result.svg.length/1024)} KB`;}

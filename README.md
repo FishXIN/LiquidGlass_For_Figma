@@ -45,7 +45,8 @@ npm run build
 ```sh
 npm test
 npm run build
-# 将 dist/ 内容提交到 gh-pages 分支
+npm run deploy
+# 首次在 GitHub Settings → Pages 选择 gh-pages / (root)
 ```
 
 首次自部署后，请修改网站 GitHub 链接及 README 在线地址。自定义域名下桥接服务的 origin 配置见连接文档。
