@@ -1,4 +1,5 @@
-import {clamp, roundedDistance, svgFromPNG} from './geometry.js';
+import {clamp, roundedDistance} from './geometry.js';
+import {glassVector} from './vector.js';
 export const W = 1200, H = 800;
 const canvas = (w, h) => Object.assign(document.createElement('canvas'), {width:w, height:h});
 export class Renderer {
@@ -39,8 +40,27 @@ export class Renderer {
     const stage=this.stage.getContext('2d');stage.clearRect(0,0,W,H);stage.drawImage(this.bg,0,0);stage.drawImage(this.patch,Math.round(p.x-w/2-pad),Math.round(p.y-h/2-pad));
   }
   export(p) {
-    this.render(p);const source=p.scope==='scene'?this.stage:this.patch;
-    const scale=p.scale;const out=canvas(source.width*scale,source.height*scale);out.getContext('2d').drawImage(source,0,0,out.width,out.height);
-    const png=out.toDataURL('image/png');return {svg:svgFromPNG(png,source.width,source.height),png,width:source.width,height:source.height,pixelWidth:out.width,pixelHeight:out.height};
+    this.render(p);
+    const w=p.width,h=p.height,r=Math.min(p.radius,w/2,h/2);
+    const sample=(pixels,x,y)=>{
+      const sx=clamp(Math.round(x),0,W-1),sy=clamp(Math.round(y),0,H-1),i=(sy*W+sx)*4;
+      return [pixels[i],pixels[i+1],pixels[i+2]];
+    };
+    const sampleGlass=(x,y)=>{
+      const d=roundedDistance(x,y,w,h,r);
+      const nx=roundedDistance(x+.5,y,w,h,r)-roundedDistance(x-.5,y,w,h,r);
+      const ny=roundedDistance(x,y+.5,w,h,r)-roundedDistance(x,y-.5,w,h,r);
+      const t=clamp(1+d/Math.min(p.edge,w/2,h/2),0,1),bend=Math.sin(t*Math.PI*.5)*p.refraction;
+      return sample(this.pixels,p.x-w/2+x-nx*bend,p.y-h/2+y-ny*bend).map(v=>v*(1-p.tint)+255*p.tint);
+    };
+    const background=this.bg.getContext('2d').getImageData(0,0,W,H).data;
+    return glassVector(p,sampleGlass,(x,y)=>sample(background,x,y));
+  }
+  exportPNG(p) {
+    this.render(p);
+    const source=p.scope==='scene'?this.stage:this.patch;
+    const out=canvas(source.width*p.scale,source.height*p.scale);
+    out.getContext('2d').drawImage(source,0,0,out.width,out.height);
+    return out.toDataURL('image/png');
   }
 }
